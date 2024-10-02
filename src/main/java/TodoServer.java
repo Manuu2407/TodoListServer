@@ -117,13 +117,13 @@ private void handlePut(HttpExchange exchange) throws IOException {
             Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);
             todo.setId(idCounter++);
             todos.add(todo);
-            sendResponse(exchange, 201, "Todo hinzugefügt");
+            sendResponse(exchange, 201, "Todo hinzugefügt"); //ToDo fix Response empty
         }
 
         private void handleDelete(HttpExchange exchange) throws IOException{
             int id = Integer.parseInt(exchange.getRequestURI().getPath().split("/")[2]);
             todos.removeIf(todo -> todo.getId() == id);
-            sendResponse(exchange, 200, "Todo gelöscht");
+            sendResponse(exchange, 200, "Todo gelöscht"); //ToDo fix Response empty
         }
 
         private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
