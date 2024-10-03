@@ -75,61 +75,47 @@ public class TodoServer {
             return null;
         }
 
-private void handlePut(HttpExchange exchange) throws IOException {
-    String path = exchange.getRequestURI().getPath();
-    String[] parts = path.split("/");
-    int id = Integer.parseInt(parts[parts.length - 1]);
-    Todo todo = findTodoById(id);
+        private void handlePut(HttpExchange exchange) throws IOException {
+            String path = exchange.getRequestURI().getPath();
+            String[] parts = path.split("/");
+            int id = Integer.parseInt(parts[parts.length - 1]);
+            Todo todo = findTodoById(id);
 
-    if (todo != null) {
-        InputStream inputStream = exchange.getRequestBody();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead;
+            if (todo != null) {
+                Todo updatedTodo = gson.fromJson(readAllBytes(exchange), Todo.class);
+                // Aktualisiere das To-Do
+                if (updatedTodo != null) {
+                    todo.setTask(updatedTodo.getTask());
+                    todo.setCompleted(updatedTodo.isCompleted());
+                    // Sende eine Bestätigung
+                    sendResponse(exchange, 200, "Todo updated");
+                }
+             else {
+                // Wenn das To-Do nicht gefunden wird
+                sendResponse(exchange, 404, "Todo not found");
+            }
+            }
 
-        // Lese den InputStream
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, bytesRead);
         }
-
-        // Konvertiere die gesammelten Bytes in einen String
-        String json = outputStream.toString(StandardCharsets.UTF_8);
-
-        // Konvertiere den JSON-String in ein Todo-Objekt
-        Todo updatedTodo = gson.fromJson(json, Todo.class);
-
-        // Aktualisiere das To-Do
-        if (updatedTodo.getTask() != null) {
-            todo.setTask(updatedTodo.getTask());
-        }
-            todo.setCompleted(updatedTodo.isCompleted());
-
-        // Sende eine Bestätigung
-        sendResponse(exchange, 200, "Todo updated");
-    } else {
-        // Wenn das To-Do nicht gefunden wird
-        sendResponse(exchange, 404, "Todo not found");
-    }
-}
-
 
         private void handlePost(HttpExchange exchange) throws IOException {
             Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);
             todo.setId(idCounter++);
             todos.add(todo);
-            sendResponse(exchange, 201, "Todo hinzugefügt"); //ToDo fix Response empty
+            sendResponse(exchange, 201, "Todo hinzugefügt");
         }
 
         private void handleDelete(HttpExchange exchange) throws IOException{
             int id = Integer.parseInt(exchange.getRequestURI().getPath().split("/")[2]);
             todos.removeIf(todo -> todo.getId() == id);
-            sendResponse(exchange, 200, "Todo gelöscht"); //ToDo fix Response empty
+            sendResponse(exchange, 200, "Todo gelöscht");
         }
 
         private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-            exchange.sendResponseHeaders(statusCode, response.length());
+            byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(statusCode, responseBytes.length);
             OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
+            os.write(responseBytes);
             os.close();
         }
     }
