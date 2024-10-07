@@ -4,7 +4,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +20,7 @@ public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
-    private static final String FILE_PATH = "C:\\Users\\Rocholz\\dev\\TodoListServer\\src\\main\\java\\todos.json";
+    private static final String FILE_PATH = "C:\\Users\\Manu\\dev\\TodoListServer\\src\\main\\java\\todos.json";
 
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();

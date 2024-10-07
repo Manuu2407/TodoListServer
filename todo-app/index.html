@@ -42,43 +42,97 @@
     <button id="update-button">Bestätigen</button>
 
     <script>
-      function loadTodos() {
-        fetch("http://localhost:8080/todos")
-          .then((response) => response.json())
-          .then((data) => {
-            const tableBody = document.querySelector("#todo-table tbody");
-            tableBody.innerHTML = "";
+function loadTodos() {
+  fetch("http://localhost:8080/todos")
+    .then((response) => response.json())
+    .then((data) => {
+      const tableBody = document.querySelector("#todo-table tbody");
+      tableBody.innerHTML = ""; // Vorherige Todos löschen, um nur die neuen Todos zu laden
 
-            data.forEach((todo) => {
-              const row = document.createElement("tr");
+      data.forEach((todo) => {
+        const row = document.createElement("tr");
 
-              const idCell = document.createElement("td");
-              idCell.textContent = todo.id;
-              row.appendChild(idCell);
+        const idCell = document.createElement("td");
+        idCell.textContent = todo.id;
+        row.appendChild(idCell);
 
-              const taskCell = document.createElement("td");
-              taskCell.textContent = todo.task;
-              row.appendChild(taskCell);
+        const taskCell = document.createElement("td");
+        taskCell.textContent = todo.task;
+        row.appendChild(taskCell);
 
-              const completedCell = document.createElement("td");
-              completedCell.textContent = todo.completed ? "Yes" : "No";
-              row.appendChild(completedCell);
+        const completedCell = document.createElement("td");
+        completedCell.textContent = todo.completed ? "Yes" : "No";
+        row.appendChild(completedCell);
 
-              const checkboxCell = document.createElement("td");
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.checked = todo.completed;
-              checkbox.dataset.id = todo.id; // Store the ID in a data attribute
-              checkboxCell.appendChild(checkbox);
-              row.appendChild(checkboxCell);
+        const checkboxCell = document.createElement("td");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.completed;
+        checkbox.dataset.id = todo.id; // Store the ID in a data attribute
+        checkboxCell.appendChild(checkbox);
+        row.appendChild(checkboxCell);
 
-              tableBody.appendChild(row);
-            });
-          })
-          .catch((error) => {
-            console.error("Fehler beim Abrufen der To-Dos:", error);
-          });
-      }
+        tableBody.appendChild(row);
+      });
+
+      // Füge die neue Zeile für Input-Felder hinzu, nachdem die vorhandenen Todos geladen wurden
+      rowToAddTodo(); 
+    })
+    .catch((error) => {
+      console.error("Fehler beim Abrufen der To-Dos:", error);
+    });
+}
+
+function rowToAddTodo() {  
+  const tableBody = document.querySelector("#todo-table tbody");
+
+  // Erstelle eine neue Tabellenreihe
+  const row = document.createElement("tr");
+
+  // Füge ein leeres Feld für die ID hinzu
+  const idCell = document.createElement("td");
+  const idInput = document.createElement("input");
+  idInput.type = "text";
+  idCell.appendChild(idInput);
+  row.appendChild(idCell);
+
+  // Füge ein Eingabefeld für die Aufgabe hinzu
+  const taskCell = document.createElement("td");
+  const taskInput = document.createElement("input");
+  taskInput.type = "text";
+  taskInput.placeholder = "Aufgabe eingeben";
+  taskCell.appendChild(taskInput);
+  row.appendChild(taskCell);
+
+  // Füge ein Eingabefeld für den Status "erledigt" hinzu
+  const completedCell = document.createElement("td");
+  const completedInput = document.createElement("input");
+  completedInput.type = "checkbox";
+  completedCell.appendChild(completedInput);
+  row.appendChild(completedCell);
+
+  // Füge ein weiteres Feld für Aktionen (z. B. Speichern) hinzu
+  const actionCell = document.createElement("td");
+  const saveButton = document.createElement("button");
+  saveButton.textContent = "Speichern";
+  actionCell.appendChild(saveButton);
+  row.appendChild(actionCell);
+
+  // Füge die neue Zeile in den Tabellen-Body ein
+  tableBody.appendChild(row);
+}
+
+window.onload = () => {
+  loadTodos();
+
+  const updateButton = document.querySelector("#update-button");
+  if (updateButton) {
+    updateButton.addEventListener("click", updateTodos);
+  } else {
+    console.error("Update-Button nicht gefunden");
+  }
+};
+
 
       function updateTodos() {
         const checkboxes = document.querySelectorAll(
@@ -114,6 +168,7 @@
 
       window.onload = () => {
         loadTodos();
+        rowToAddTodo();
 
         const updateButton = document.querySelector("#update-button");
         if (updateButton) {
