@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Liste</title>
+    <style>
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>To-Do Liste</h1>
+    <table id="todo-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Task</th>
+                <th>Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Daten werden hier eingefügt -->
+        </tbody>
+    </table>
+
+    <script>
+        function loadTodos() {
+            fetch('http://localhost:8080/todos')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#todo-table tbody');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(todo => {
+                        const row = document.createElement('tr');
+
+                        const idCell = document.createElement('td');
+                        idCell.textContent = todo.id;
+                        row.appendChild(idCell);
+
+                        const taskCell = document.createElement('td');
+                        taskCell.textContent = todo.task;
+                        row.appendChild(taskCell);
+
+                        const completedCell = document.createElement('td');
+                        completedCell.textContent = todo.completed ? 'Yes' : 'No';
+                        row.appendChild(completedCell);
+
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Fehler beim Abrufen der To-Dos:', error);
+                });
+        }
+
+        window.onload = loadTodos;
+    </script>
+</body>
+</html>

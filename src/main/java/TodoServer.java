@@ -1,12 +1,11 @@
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
+import java.io.*;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,16 +15,51 @@ public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
+    private static final String FILE_PATH = "todos.json";
 
     public static void main(String[] args) throws IOException {
+        loadTodosFromFile();
+
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/todos", new TodoHandler());
         server.setExecutor(null);
         server.start();
         System.out.println("Server runs at http://localhost:8080/todos");
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+           try{
+               saveTodosToFile();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+        }
+        ));
     }
 
+    private static void saveTodosToFile() throws IOException {
+        try (FileWriter writer = new FileWriter(FILE_PATH)) {
+            gson.toJson(todos, writer);
+            System.out.println("To-Dos wurden in " + FILE_PATH + " gespeichert.");
+        }
+    }
+
+    private static void loadTodosFromFile() throws IOException {
+        try (FileReader reader = new FileReader(FILE_PATH)) {
+            Type todoListType = new TypeToken<List<Todo>>(){}.getType();
+            List<Todo> loadedTodos = gson.fromJson(reader, todoListType);
+
+            if (loadedTodos != null) {
+                todos.clear();
+                todos.addAll(loadedTodos);
+
+                idCounter = todos.stream().mapToInt(Todo::getId).max().orElse(0);
+
+                System.out.println("To-Dos wurden aus " + FILE_PATH + " geladen.");
+
+                // HIER WEITERMACHEN!
+            }
+        }
+    }
 
     static class TodoHandler implements HttpHandler {
         @Override
@@ -62,6 +96,7 @@ public class TodoServer {
         }
 
         private void handleGet(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             String response = gson.toJson(todos);
             sendResponse(exchange, 200, response);
         }
@@ -83,18 +118,17 @@ public class TodoServer {
 
             if (todo != null) {
                 Todo updatedTodo = gson.fromJson(readAllBytes(exchange), Todo.class);
-                // Aktualisiere das To-Do
-                if (updatedTodo != null) {
+                // updates the todo
+                if (updatedTodo.getTask() != null) {
                     todo.setTask(updatedTodo.getTask());
-                    todo.setCompleted(updatedTodo.isCompleted());
-                    // Sende eine Bestätigung
-                    sendResponse(exchange, 200, "Todo updated");
                 }
+                todo.setCompleted(updatedTodo.isCompleted());
+                sendResponse(exchange, 200, "Todo updated");
+            }
              else {
-                // Wenn das To-Do nicht gefunden wird
                 sendResponse(exchange, 404, "Todo not found");
             }
-            }
+
 
         }
 
