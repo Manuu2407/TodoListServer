@@ -3,6 +3,10 @@ import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -10,12 +14,14 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
-    private static final String FILE_PATH = "todos.json";
+    private static final String FILE_PATH = "C:\\Users\\Rocholz\\dev\\TodoListServer\\src\\main\\java\\todos.json";
 
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();
@@ -26,6 +32,9 @@ public class TodoServer {
         server.start();
         System.out.println("Server runs at http://localhost:8080/todos");
 
+        Timer saveTodosTimer = new Timer();
+        saveTodosTimer.schedule(new SafeFiles(), 10000, 300000);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
            try{
                saveTodosToFile();
@@ -34,6 +43,17 @@ public class TodoServer {
            }
         }
         ));
+    }
+
+    static class SafeFiles extends TimerTask{
+        public void run() {
+            try {
+                saveTodosToFile();
+                System.out.println(" (automatisches speichern)");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static void saveTodosToFile() throws IOException {
@@ -56,14 +76,26 @@ public class TodoServer {
 
                 System.out.println("To-Dos wurden aus " + FILE_PATH + " geladen.");
 
-                // HIER WEITERMACHEN!
             }
         }
     }
 
+    @CrossOrigin(origins = "http://127.0.0.1:5500")
+    @RestController
+    @RequestMapping("/todos")
     static class TodoHandler implements HttpHandler {
+        @CrossOrigin(origins = "http://127.0.0.1:5500")
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            // Set CORS headers
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
             switch (exchange.getRequestMethod()) {
                 case "GET":
                     handleGet(exchange);
@@ -96,7 +128,6 @@ public class TodoServer {
         }
 
         private void handleGet(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             String response = gson.toJson(todos);
             sendResponse(exchange, 200, response);
         }
@@ -111,26 +142,21 @@ public class TodoServer {
         }
 
         private void handlePut(HttpExchange exchange) throws IOException {
-            String path = exchange.getRequestURI().getPath();
-            String[] parts = path.split("/");
-            int id = Integer.parseInt(parts[parts.length - 1]);
-            Todo todo = findTodoById(id);
+            String requestBody = readAllBytes(exchange);
+            Type listType = new TypeToken<List<Todo>>(){}.getType();
+            List<Todo> updatedTodos = gson.fromJson(requestBody, listType);
 
-            if (todo != null) {
-                Todo updatedTodo = gson.fromJson(readAllBytes(exchange), Todo.class);
-                // updates the todo
-                if (updatedTodo.getTask() != null) {
-                    todo.setTask(updatedTodo.getTask());
+            for (Todo updatedTodo : updatedTodos) {
+                Todo existingTodo = findTodoById(updatedTodo.getId());
+                if (existingTodo != null) {
+                    existingTodo.setCompleted(updatedTodo.isCompleted());
                 }
-                todo.setCompleted(updatedTodo.isCompleted());
-                sendResponse(exchange, 200, "Todo updated");
-            }
-             else {
-                sendResponse(exchange, 404, "Todo not found");
             }
 
-
+            String response = gson.toJson(todos);
+            sendResponse(exchange, 200, response);
         }
+
 
         private void handlePost(HttpExchange exchange) throws IOException {
             Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);

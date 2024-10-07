@@ -1,73 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>To-Do Liste</title>
     <style>
-        table {
-            width: 50%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
+      table {
+        width: 50%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
 
-        table, th, td {
-            border: 1px solid black;
-        }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
 
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>To-Do Liste</h1>
     <table id="todo-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Task</th>
-                <th>Completed</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Daten werden hier eingefügt -->
-        </tbody>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Task</th>
+          <th>Completed</th>
+          <th>Set Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Daten werden hier eingefügt -->
+      </tbody>
     </table>
+    <button id="update-button">Bestätigen</button>
 
     <script>
-        function loadTodos() {
-            fetch('http://localhost:8080/todos')
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.querySelector('#todo-table tbody');
-                    tableBody.innerHTML = '';
+      function loadTodos() {
+        fetch("http://localhost:8080/todos")
+          .then((response) => response.json())
+          .then((data) => {
+            const tableBody = document.querySelector("#todo-table tbody");
+            tableBody.innerHTML = "";
 
-                    data.forEach(todo => {
-                        const row = document.createElement('tr');
+            data.forEach((todo) => {
+              const row = document.createElement("tr");
 
-                        const idCell = document.createElement('td');
-                        idCell.textContent = todo.id;
-                        row.appendChild(idCell);
+              const idCell = document.createElement("td");
+              idCell.textContent = todo.id;
+              row.appendChild(idCell);
 
-                        const taskCell = document.createElement('td');
-                        taskCell.textContent = todo.task;
-                        row.appendChild(taskCell);
+              const taskCell = document.createElement("td");
+              taskCell.textContent = todo.task;
+              row.appendChild(taskCell);
 
-                        const completedCell = document.createElement('td');
-                        completedCell.textContent = todo.completed ? 'Yes' : 'No';
-                        row.appendChild(completedCell);
+              const completedCell = document.createElement("td");
+              completedCell.textContent = todo.completed ? "Yes" : "No";
+              row.appendChild(completedCell);
 
-                        tableBody.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    console.error('Fehler beim Abrufen der To-Dos:', error);
-                });
+              const checkboxCell = document.createElement("td");
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = todo.completed;
+              checkbox.dataset.id = todo.id; // Store the ID in a data attribute
+              checkboxCell.appendChild(checkbox);
+              row.appendChild(checkboxCell);
+
+              tableBody.appendChild(row);
+            });
+          })
+          .catch((error) => {
+            console.error("Fehler beim Abrufen der To-Dos:", error);
+          });
+      }
+
+      function updateTodos() {
+        const checkboxes = document.querySelectorAll(
+          "#todo-table tbody input[type='checkbox']"
+        );
+        const updates = Array.from(checkboxes).map((checkbox) => ({
+          id: checkbox.dataset.id,
+          completed: checkbox.checked,
+        }));
+
+        fetch("http://localhost:8080/todos", {
+          method: "PUT",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updates),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Fehler beim Aktualisieren der To-Dos");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("To-Dos erfolgreich aktualisiert:", data);
+            loadTodos(); // Reload the todos to reflect the changes
+          })
+          .catch((error) => {
+            console.error("Fehler beim Aktualisieren der To-Dos:", error);
+          });
+      }
+
+      window.onload = () => {
+        loadTodos();
+
+        const updateButton = document.querySelector("#update-button");
+        if (updateButton) {
+          updateButton.addEventListener("click", updateTodos);
+        } else {
+          console.error("Update-Button nicht gefunden");
         }
-
-        window.onload = loadTodos;
+      };
     </script>
-</body>
+  </body>
 </html>

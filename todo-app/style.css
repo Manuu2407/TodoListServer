@@ -1,14 +1,15 @@
 body {
-    font-family: Arial, sans-serif;
+  font-family: Arial, sans-serif;
+  padding: 1em;
 }
 
 #output {
-    margin: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
 }
 
 div {
-    border-bottom: 1px solid #eee;
-    padding: 5px 0;
+  border-bottom: 1px solid #eee;
+  padding: 5px 0;
 }
