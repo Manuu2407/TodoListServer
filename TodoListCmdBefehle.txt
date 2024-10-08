@@ -3,7 +3,7 @@ TodoListServer Befehle:
 GET: curl http://localhost:8080/todos
 PUT: curl -X PUT "http://localhost:8080/todos/1" -H "Content-Type: application/json" -d '{"task": "Einkaufen gehen", "completed": true}'
 POST: curl -X POST "http://localhost:8080/todos" -H "Content-Type: application/json" -d '{"task": "Einkaufen gehen"}'
-DELETE: curl -X DELETE "http://localhost:8080/todos/1" //noch nicht implementiert
+DELETE: curl -X DELETE "http://localhost:8080/todos/1"
 
 # GET request
 Invoke-RestMethod -Uri http://localhost:8080/todos -Method Get

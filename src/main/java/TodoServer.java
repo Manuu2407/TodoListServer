@@ -20,7 +20,7 @@ public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
-    private static final String FILE_PATH = "C:\\Users\\Manu\\dev\\TodoListServer\\src\\main\\java\\todos.json";
+    private static final String FILE_PATH = "C:\\Users\\Rocholz\\dev\\TodoListServer\\src\\main\\java\\todos.json";
 
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();
@@ -35,16 +35,16 @@ public class TodoServer {
         saveTodosTimer.schedule(new SafeFiles(), 10000, 300000);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-           try{
-               saveTodosToFile();
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
+            try {
+                saveTodosToFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         ));
     }
 
-    static class SafeFiles extends TimerTask{
+    static class SafeFiles extends TimerTask {
         public void run() {
             try {
                 saveTodosToFile();
@@ -64,7 +64,8 @@ public class TodoServer {
 
     private static void loadTodosFromFile() throws IOException {
         try (FileReader reader = new FileReader(FILE_PATH)) {
-            Type todoListType = new TypeToken<List<Todo>>(){}.getType();
+            Type todoListType = new TypeToken<List<Todo>>() {
+            }.getType();
             List<Todo> loadedTodos = gson.fromJson(reader, todoListType);
 
             if (loadedTodos != null) {
@@ -72,6 +73,7 @@ public class TodoServer {
                 todos.addAll(loadedTodos);
 
                 idCounter = todos.stream().mapToInt(Todo::getId).max().orElse(0);
+                idCounter++;
 
                 System.out.println("To-Dos wurden aus " + FILE_PATH + " geladen.");
 
@@ -142,7 +144,8 @@ public class TodoServer {
 
         private void handlePut(HttpExchange exchange) throws IOException {
             String requestBody = readAllBytes(exchange);
-            Type listType = new TypeToken<List<Todo>>(){}.getType();
+            Type listType = new TypeToken<List<Todo>>() {
+            }.getType();
             List<Todo> updatedTodos = gson.fromJson(requestBody, listType);
 
             for (Todo updatedTodo : updatedTodos) {
@@ -161,10 +164,10 @@ public class TodoServer {
             Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);
             todo.setId(idCounter++);
             todos.add(todo);
-            sendResponse(exchange, 201, "Todo hinzugefügt");
+            sendResponse(exchange, 201, "Todo hinzugefügt: " + gson.toJson(todo));
         }
 
-        private void handleDelete(HttpExchange exchange) throws IOException{
+        private void handleDelete(HttpExchange exchange) throws IOException {
             int id = Integer.parseInt(exchange.getRequestURI().getPath().split("/")[2]);
             todos.removeIf(todo -> todo.getId() == id);
             sendResponse(exchange, 200, "Todo gelöscht");
