@@ -1,3 +1,4 @@
+// This class is also replaceable by a record
 public class Todo {
     private int id;
     private String task;

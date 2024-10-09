@@ -44,6 +44,7 @@ public class TodoServer {
         ));
     }
 
+    // class for persistent saving and loading data from server after server was down
     static class SafeFiles extends TimerTask {
         public void run() {
             try {
@@ -72,14 +73,16 @@ public class TodoServer {
                 todos.clear();
                 todos.addAll(loadedTodos);
 
+                // sets idCounter to the value for next task to add list
+                // necessary when restart server, to keep adding the correct ID
                 idCounter = todos.stream().mapToInt(Todo::getId).max().orElse(0);
                 idCounter++;
 
                 System.out.println("To-Dos wurden aus " + FILE_PATH + " geladen.");
-
             }
         }
     }
+
 
     @CrossOrigin(origins = "http://127.0.0.1:5500")
     @RestController
@@ -88,7 +91,7 @@ public class TodoServer {
         @CrossOrigin(origins = "http://127.0.0.1:5500")
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            // Set CORS headers
+            // sets CORS headers
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
@@ -115,6 +118,60 @@ public class TodoServer {
             }
         }
 
+        // handles every GET request and answers with the List that contains todos as JSON
+        private void handleGet(HttpExchange exchange) throws IOException {
+            String response = gson.toJson(todos);
+            sendResponse(exchange, 200, response);
+        }
+
+        // handles every PUT request, finds the task to change by finding it by its ID
+        // and updates that task with given parameters
+        // can handle multiple updates at once
+        private void handlePut(HttpExchange exchange) throws IOException {
+            String requestBody = readAllBytes(exchange);
+            Type listType = new TypeToken<List<Todo>>() {
+            }.getType();
+            List<Todo> updatedTodos = gson.fromJson(requestBody, listType);
+
+            for (Todo updatedTodo : updatedTodos) {
+                Todo existingTodo = findTodoById(updatedTodo.getId());
+                if (existingTodo != null) {
+                    existingTodo.setCompleted(updatedTodo.isCompleted());
+                }
+            }
+            // answers with updated todolist as JSON
+            String response = gson.toJson(todos);
+            sendResponse(exchange, 200, response);
+        }
+
+        // handles every POST request and adds the given task to the todolist
+        // answers with the added task as JSON
+        private void handlePost(HttpExchange exchange) throws IOException {
+            Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);
+            // handlePost is also responsible to allocate unique IDs
+            todo.setId(idCounter++);
+            todos.add(todo);
+            sendResponse(exchange, 201, gson.toJson(todo));
+        }
+
+        // handles every DELETE request by its unique URL ending with the id that wants to be deleted
+        // can handle only one DELETE request at a time
+        // answers with a String containing information that delete is done
+        private void handleDelete(HttpExchange exchange) throws IOException {
+            int id = Integer.parseInt(exchange.getRequestURI().getPath().split("/")[2]);
+            todos.removeIf(todo -> todo.getId() == id);
+            sendResponse(exchange, 200, "Todo gelöscht");
+        }
+
+
+        private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+            byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(statusCode, responseBytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(responseBytes);
+            os.close();
+        }
+
         // readAllBytes can be replaced by InputStream.readAllBytes() in newest java version.
         // Not available before java 9.
         private String readAllBytes(HttpExchange exchange) throws IOException {
@@ -128,11 +185,6 @@ public class TodoServer {
             return outputStream.toString();
         }
 
-        private void handleGet(HttpExchange exchange) throws IOException {
-            String response = gson.toJson(todos);
-            sendResponse(exchange, 200, response);
-        }
-
         private Todo findTodoById(int id) {
             for (Todo todo : todos) {
                 if (todo.getId() == id) {
@@ -140,45 +192,6 @@ public class TodoServer {
                 }
             }
             return null;
-        }
-
-        private void handlePut(HttpExchange exchange) throws IOException {
-            String requestBody = readAllBytes(exchange);
-            Type listType = new TypeToken<List<Todo>>() {
-            }.getType();
-            List<Todo> updatedTodos = gson.fromJson(requestBody, listType);
-
-            for (Todo updatedTodo : updatedTodos) {
-                Todo existingTodo = findTodoById(updatedTodo.getId());
-                if (existingTodo != null) {
-                    existingTodo.setCompleted(updatedTodo.isCompleted());
-                }
-            }
-
-            String response = gson.toJson(todos);
-            sendResponse(exchange, 200, response);
-        }
-
-
-        private void handlePost(HttpExchange exchange) throws IOException {
-            Todo todo = gson.fromJson(readAllBytes(exchange), Todo.class);
-            todo.setId(idCounter++);
-            todos.add(todo);
-            sendResponse(exchange, 201, "Todo hinzugefügt: " + gson.toJson(todo));
-        }
-
-        private void handleDelete(HttpExchange exchange) throws IOException {
-            int id = Integer.parseInt(exchange.getRequestURI().getPath().split("/")[2]);
-            todos.removeIf(todo -> todo.getId() == id);
-            sendResponse(exchange, 200, "Todo gelöscht");
-        }
-
-        private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-            byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(statusCode, responseBytes.length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(responseBytes);
-            os.close();
         }
     }
 }
