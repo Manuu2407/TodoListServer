@@ -1,3 +1,5 @@
+package ToDoListServer;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
@@ -20,7 +22,7 @@ public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
-    private static final String FILE_PATH = "C:\\Users\\Rocholz\\dev\\TodoListServer\\src\\main\\java\\todos.json";
+    private static final String FILE_PATH = "C:\\Users\\Manu\\dev\\TodoListServer\\src\\main\\java\\ToDoListServer\\todos.json";
 
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();
