@@ -27,7 +27,7 @@ public class TodoServer {
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
         server.createContext("/todos", new TodoHandler());
         server.setExecutor(null);
         server.start();

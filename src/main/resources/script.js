@@ -1,6 +1,6 @@
 // loads every todo in given Todos<Array>
 function loadTodos() {
-  fetch("http://localhost:8080/todos")
+  fetch("http://localhost:80/todos")
     .then((response) => response.json())
     .then((data) => {
       const tableBody = document.querySelector("#todo-table tbody");
@@ -107,7 +107,7 @@ function updateTodos() {
   }));
 
   // sends PUT request to http Server with updated tasks
-  fetch("http://localhost:8080/todos", {
+  fetch("http://localhost:80/todos", {
     method: "PUT",
     mode: "cors",
     headers: {
@@ -145,7 +145,7 @@ function addTodo(event) {
     return;
   } else {
     // sends POST request to http Server with new task
-    fetch("http://localhost:8080/todos", {
+    fetch("http://localhost:80/todos", {
       method: "POST",
       mode: "cors",
       headers: {
@@ -182,7 +182,7 @@ function deleteTodos() {
   // sends DELETE request to http Server one-by-one, as server handles DELETE requests by unique URL for the given task
   // Server can´t handle multiple tasks in one single DELETE request
   deletes.forEach((todo) => {
-    fetch(`http://localhost:8080/todos/${todo.id}`, {
+    fetch(`http://localhost:80/todos/${todo.id}`, {
       method: "DELETE",
       mode: "cors",
       headers: {
