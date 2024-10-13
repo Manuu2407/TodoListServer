@@ -22,7 +22,7 @@ public class TodoServer {
     private static final List<Todo> todos = new ArrayList<>();
     private static int idCounter = 1;
     private static final Gson gson = new Gson();
-    private static final String FILE_PATH = "C:\\Users\\Manu\\dev\\TodoListServer\\src\\main\\java\\ToDoListServer\\todos.json";
+    private static final String FILE_PATH = ".\\src\\main\\java\\ToDoListServer\\todos.json";
 
     public static void main(String[] args) throws IOException {
         loadTodosFromFile();
